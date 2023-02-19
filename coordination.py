@@ -9,19 +9,23 @@ class ServerSocket:
         self.sock = SocketConnectionServer(self.host, self.port)
 
     def run_server(self):
-        print("Five")
         while True:
-            conn = self.sock.accept()
-            data = conn.recv(1024)
-            print(f"Received {data!r} from Client")
-            # connect to DB
-            # execute query
-            # db_conn_server = DBConnector("ds_dummy")
-            # db_conn_server.connect()
-            # execute query
-            # cursor = db_conn_server.conn.cursor()
+            try:
+                conn = self.sock.accept()
+                data = conn.recv(1024).decode()
+                print(f"Received query from Client")
+                # connect to DB
+                db_conn_server = DBConnector("ds_dummy")
+                print("Connected to DB")
+                db_conn_server.connect()
+                # execute query
+                result = db_conn_server.execute(data)
+                # commit changes
+                db_conn_server.conn.commit()
+                conn.sendall("Query Executed".encode())
 
-            conn.sendall(data)
+            except Exception as exc:
+                print('{}: {}'.format(type(exc).__name__, exc))
         # conn.close()
 
 

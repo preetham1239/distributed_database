@@ -8,14 +8,14 @@ class SocketConnectionClient:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.host, self.port))
 
-    def send(self, data=bytes):
-        self.sock.sendall(data)
-        print(f"Sent {data!r}")
+    def send(self, data=str):
+        data_to_send = data.encode()
+        self.sock.sendall(data_to_send)
+        print(f"Sent query to co-ordination layer")
 
     def receive(self):
-        data = self.sock.recv(1024)
+        data = self.sock.recv(1024).decode()
         print(f"Received {data!r} from Server")
-        return data
 
     def close(self):
         self.sock.close()
