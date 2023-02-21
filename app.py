@@ -1,5 +1,7 @@
 import json
 import socket
+import threading
+
 from socket_conn import SocketConnectionClient
 
 from flask import Flask, request
@@ -13,8 +15,9 @@ parser = reqparse.RequestParser()
 parser.add_argument('query', location='form')
 
 
-class Database(Resource):
+class Database(Resource, threading.Thread):
     def __init__(self):
+        super().__init__()
         self.client_socket = None
 
     def get(self):
@@ -23,12 +26,13 @@ class Database(Resource):
         query = args['query'].lower()
         self.client_socket.send(query)
         query_result = self.client_socket.receive()
+        print(type(query_result))
 
-        query_result = json.loads(query_result)
-        for row in query_result:
-            print(row)
+        # query_result = json.loads(query_result)
+        # for row in query_result:
+        #     print(row)
 
-        message, status_code = {'response': 'Query Executed'}, 200
+        message, status_code = {'result': query_result}, 200
         self.client_socket.close()
         return message, status_code
 
@@ -47,3 +51,8 @@ api.add_resource(Database, '/databases')
 
 if __name__ == '__main__':
     app.run(debug=True)
+    # server = Server(client_socket_arg, document_root_arg)
+
+    # Start a new thread
+    threadObj = threading.Thread(target=app.run)
+    threadObj.start()
