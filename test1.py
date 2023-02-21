@@ -6,7 +6,7 @@ import requests
 program_start_time = time.time()
 for i in range(1):
     request_start_time = time.time()
-    query = "select * from rooms;"
+    query = f"insert into rooms(id, name) values (13282335, 'cewduerwj');"
     query = query.lower()
     if 'select' in query:
         r = requests.get('http://localhost:5000/databases', data={'query': query})

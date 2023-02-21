@@ -1,5 +1,6 @@
 import json
 import threading
+from _thread import start_new_thread
 
 from socket_conn import SocketConnectionServer
 from db_conn import DBConnector
@@ -16,12 +17,17 @@ class ServerSocket(threading.Thread):
         print(f"Server listening on {self.host}:{self.port}")
         while True:
             # Start a new thread
-            thread_obj = threading.Thread(target=self.run_server())
-            thread_obj.start()
+            conn = self.sock.accept()
+            print("Accepted connection from client")
+            client_query = conn.recv(1024).decode()
+            print(f"Received query from Client")
+            # thread_obj = threading.Thread(target=self.run_server(conn))
+            # thread_obj.start()
+            start_new_thread(self.run_server(client_query), ())
+            # print thread ID
+            print("Thread ID: {}".format(threading.get_ident()))
 
-    def run_server(self):
-        conn = self.sock.accept()
-        client_query = conn.recv(1024).decode()
+    def run_server(self, client_query):
         print(f"Received query from Client")
         try:
             # connect to DB

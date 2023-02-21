@@ -15,7 +15,7 @@ class SocketConnectionClient:
 
     def receive(self):
         data = self.sock.recv(1024).decode()
-        print(data)
+        # print(data)
         return data
 
     def close(self):

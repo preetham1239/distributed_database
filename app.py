@@ -1,6 +1,7 @@
 import json
 import socket
 import threading
+import time
 
 from socket_conn import SocketConnectionClient
 
@@ -24,9 +25,11 @@ class Database(Resource, threading.Thread):
         self.client_socket = SocketConnectionClient("localhost", 8080)
         args = parser.parse_args()
         query = args['query'].lower()
+        time.sleep(500)
+        threading.sleep(500)
         self.client_socket.send(query)
         query_result = self.client_socket.receive()
-        print(type(query_result))
+        print("Thread ID for get: {}".format(threading.get_ident()))
 
         # query_result = json.loads(query_result)
         # for row in query_result:
@@ -41,6 +44,7 @@ class Database(Resource, threading.Thread):
         args = parser.parse_args()
         query = args['query'].lower()
         self.client_socket.send(query)
+        print("Thread ID for post: {}".format(threading.get_ident()))
         _ = self.client_socket.receive()
         message, status_code = {'response': 'Query Executed'}, 200
         self.client_socket.close()
