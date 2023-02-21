@@ -1,3 +1,4 @@
+import json
 import socket
 from socket_conn import SocketConnectionClient
 
@@ -17,15 +18,28 @@ class Database(Resource):
         self.client_socket = None
 
     def get(self):
-        return {'data': "data"}, 200
+        self.client_socket = SocketConnectionClient("localhost", 8080)
+        args = parser.parse_args()
+        query = args['query'].lower()
+        self.client_socket.send(query)
+        query_result = self.client_socket.receive()
+
+        query_result = json.loads(query_result)
+        for row in query_result:
+            print(row)
+
+        message, status_code = {'response': 'Query Executed'}, 200
+        self.client_socket.close()
+        return message, status_code
 
     def post(self):
         self.client_socket = SocketConnectionClient("localhost", 8080)
         args = parser.parse_args()
-        query = args['query']
+        query = args['query'].lower()
         self.client_socket.send(query)
-        self.client_socket.receive()
+        _ = self.client_socket.receive()
         message, status_code = {'response': 'Query Executed'}, 200
+        self.client_socket.close()
         return message, status_code
 
 

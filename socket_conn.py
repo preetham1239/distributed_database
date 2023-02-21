@@ -15,7 +15,7 @@ class SocketConnectionClient:
 
     def receive(self):
         data = self.sock.recv(1024).decode()
-        print(f"Received {data!r} from Server")
+        return data
 
     def close(self):
         self.sock.close()
