@@ -1,0 +1,17 @@
+database1:
+  host: localhost
+  username: root
+  password: Root123@#
+  database: test1
+
+database2:
+  host: localhost
+  username: root
+  password: Root123@#
+  database: test2
+
+database3:
+  host: localhost
+  username: root
+  password: Root123@#
+  database: test3
