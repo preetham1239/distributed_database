@@ -1,6 +1,9 @@
 import threading
 import time
 
+import rpyc
+import json
+
 from socket_conn import SocketConnectionClient
 
 from flask import Flask
@@ -29,22 +32,18 @@ class Database(Resource, threading.Thread):
         # thread_obj.
 
     def dummy_get(self):
-        client_socket_get = SocketConnectionClient("localhost", 8080)
-        client_socket_get.connect()
+        connection = rpyc.connect('localhost', 9000)
         args = parser.parse_args()
         query = args['query'].lower()
-        print("Sleeping for 500 seconds")
 
-        client_socket_get.send(query)
-        query_result = client_socket_get.receive()
+        query_result = connection.root.execute_query(query)
         print("Thread ID for get: {}".format(threading.get_ident()))
 
-        # query_result = json.loads(query_result)
+        query_result = json.loads(query_result)
         # for row in query_result:
         #     print(row)
 
         message, status_code = {'result': query_result}, 200
-        client_socket_get.close()
         self.get_message = message
         self.get_status_code = status_code
 
@@ -54,16 +53,13 @@ class Database(Resource, threading.Thread):
         return self.post_message, self.post_status_code
 
     def dummy_post(self):
-        client_socket_post = SocketConnectionClient("localhost", 8080)
-        client_socket_post.connect()
+        connection = rpyc.connect('localhost', 9000)
         args = parser.parse_args()
         query = args['query'].lower()
-        time.sleep(500)
-        client_socket_post.send(query)
         print("Thread ID for post: {}".format(threading.get_ident()))
-        _ = client_socket_post.receive()
+        time.sleep(30)
+        print(connection.root.execute_query(query))
         message, status_code = {'response': 'Query Executed'}, 200
-        client_socket_post.close()
         self.post_message = message
         self.post_status_code = status_code
 

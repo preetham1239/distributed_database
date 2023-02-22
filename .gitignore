@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 dummy.py
 server.py
+client.py
