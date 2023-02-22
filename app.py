@@ -1,12 +1,13 @@
-import json
-import socket
 import threading
+import time
+
+import rpyc
+import json
 
 from socket_conn import SocketConnectionClient
 
-from flask import Flask, request
-from flask_restful import reqparse, abort, Api, Resource
-# from socket_conn import SocketConnection
+from flask import Flask
+from flask_restful import reqparse, Api, Resource
 
 app = Flask(__name__)
 api = Api(app)
@@ -18,41 +19,52 @@ parser.add_argument('query', location='form')
 class Database(Resource, threading.Thread):
     def __init__(self):
         super().__init__()
-        self.client_socket = None
+        # self.client_socket = None
+        self.get_message = None
+        self.get_status_code = None
+        self.post_message = None
+        self.post_status_code = None
 
     def get(self):
-        self.client_socket = SocketConnectionClient("localhost", 8080)
+        thread_obj = threading.Thread(target=self.dummy_get())
+        thread_obj.start()
+        return self.get_message, self.get_status_code
+        # thread_obj.
+
+    def dummy_get(self):
+        connection = rpyc.connect('localhost', 9000)
         args = parser.parse_args()
         query = args['query'].lower()
-        self.client_socket.send(query)
-        query_result = self.client_socket.receive()
-        print(type(query_result))
 
-        # query_result = json.loads(query_result)
+        query_result = connection.root.execute_query(query)
+        print("Thread ID for get: {}".format(threading.get_ident()))
+
+        query_result = json.loads(query_result)
         # for row in query_result:
         #     print(row)
 
         message, status_code = {'result': query_result}, 200
-        self.client_socket.close()
-        return message, status_code
+        self.get_message = message
+        self.get_status_code = status_code
 
     def post(self):
-        self.client_socket = SocketConnectionClient("localhost", 8080)
+        thread_obj = threading.Thread(target=self.dummy_post())
+        thread_obj.start()
+        return self.post_message, self.post_status_code
+
+    def dummy_post(self):
+        connection = rpyc.connect('localhost', 9000)
         args = parser.parse_args()
         query = args['query'].lower()
-        self.client_socket.send(query)
-        _ = self.client_socket.receive()
+        print("Thread ID for post: {}".format(threading.get_ident()))
+        time.sleep(30)
+        print(connection.root.execute_query(query))
         message, status_code = {'response': 'Query Executed'}, 200
-        self.client_socket.close()
-        return message, status_code
+        self.post_message = message
+        self.post_status_code = status_code
 
 
 api.add_resource(Database, '/databases')
 
 if __name__ == '__main__':
     app.run(debug=True)
-    # server = Server(client_socket_arg, document_root_arg)
-
-    # Start a new thread
-    threadObj = threading.Thread(target=app.run)
-    threadObj.start()

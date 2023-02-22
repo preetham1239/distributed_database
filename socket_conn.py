@@ -6,7 +6,10 @@ class SocketConnectionClient:
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def connect(self):
         self.sock.connect((self.host, self.port))
+        print(f"Connected to server: {self.host}:{self.port}")
 
     def send(self, data=str):
         data_to_send = data.encode()
@@ -15,7 +18,7 @@ class SocketConnectionClient:
 
     def receive(self):
         data = self.sock.recv(1024).decode()
-        print(data)
+        # print(data)
         return data
 
     def close(self):
@@ -29,9 +32,9 @@ class SocketConnectionServer:
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((self.host, self.port))
-        self.sock.listen()
+        self.sock.listen(5)
 
-    def accept(self):
+    def accept_clients(self):
         conn, addr = self.sock.accept()
         print(f"Connected by client: {addr}")
         return conn

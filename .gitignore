@@ -4,3 +4,5 @@ __pycache__/
 .Python
 *.pyc
 dummy.py
+server.py
+client.py

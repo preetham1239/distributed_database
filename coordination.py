@@ -1,46 +1,41 @@
 import json
-import threading
 
-from socket_conn import SocketConnectionServer
+import rpyc
+from rpyc.utils.server import ThreadedServer
+from rpyc.utils.factory import threading
 from db_conn import DBConnector
 
 
-class ServerSocket(threading.Thread):
-    def __init__(self, host, port):
-        super().__init__()
-        self.host = host
-        self.port = port
-        self.sock = SocketConnectionServer(self.host, self.port)
-
-    def run_thread(self):
-        print(f"Server listening on {self.host}:{self.port}")
-        while True:
-            # Start a new thread
-            thread_obj = threading.Thread(target=self.run_server())
-            thread_obj.start()
-
-    def run_server(self):
-        conn = self.sock.accept()
-        client_query = conn.recv(1024).decode()
-        print(f"Received query from Client")
+@rpyc.service
+class Coordination1(rpyc.Service):
+    @rpyc.exposed
+    def execute_query(self, query):
+        # get thread ID
+        print("Thread ID: {}".format(threading.get_ident()))
+        if query is None:
+            return None
         try:
             # connect to DB
             db_conn_server = DBConnector("ds_dummy")
             print("Connected to DB")
             db_conn_server.connect()
             # execute query
-            result = db_conn_server.execute(client_query)
-            if 'select' in client_query.lower():
+            result = db_conn_server.execute(query)
+            if 'select' in query.lower():
                 query_result_to_send = json.dumps(result, indent=2, default=str).encode()
             else:
                 query_result_to_send = "Query Executed".encode()
                 # commit changes
                 db_conn_server.conn.commit()
-            conn.sendall(query_result_to_send)
+            # self.conn.sendall(query_result_to_send)
+            return query_result_to_send
         except Exception as exc:
             print('{}: {}'.format(type(exc).__name__, exc))
+            return exc
 
 
-if __name__ == '__main__':
-    server = ServerSocket("localhost", 8080)
-    server.run_thread()
+print('starting server')
+server = ThreadedServer(Coordination1, port=9000)
+server.start()
+
+# git commit -m "Moved to RPC. Both app and coordination layer work with threads as expected.
