@@ -12,37 +12,40 @@ class ServerSocket(threading.Thread):
         self.host = host
         self.port = port
         self.sock = SocketConnectionServer(self.host, self.port)
+        self.conn = None
+        self.client_query = None
 
     def run_thread(self):
         print(f"Server listening on {self.host}:{self.port}")
         while True:
             # Start a new thread
-            conn = self.sock.accept()
-            print("Accepted connection from client")
-            client_query = conn.recv(1024).decode()
-            print(f"Received query from Client")
-            # thread_obj = threading.Thread(target=self.run_server(conn))
-            # thread_obj.start()
-            start_new_thread(self.run_server(client_query), ())
+            self.conn = self.sock.accept_clients()
+            self.client_query = self.conn.recv(1024).decode()
+            print(f"Received query from client: {self.client_query}")
+            # self.run_server()
+            thread_obj1 = threading.Thread(target=self.run_server)
+            thread_obj1.start()
+            # start_new_thread(self.run_server(client_query), ())
             # print thread ID
-            print("Thread ID: {}".format(threading.get_ident()))
 
-    def run_server(self, client_query):
-        print(f"Received query from Client")
+    def run_server(self):
+        print("Thread ID: {}".format(threading.get_ident()))
+        if self.client_query is None:
+            pass
         try:
             # connect to DB
             db_conn_server = DBConnector("ds_dummy")
             print("Connected to DB")
             db_conn_server.connect()
             # execute query
-            result = db_conn_server.execute(client_query)
-            if 'select' in client_query.lower():
+            result = db_conn_server.execute(self.client_query)
+            if 'select' in self.client_query.lower():
                 query_result_to_send = json.dumps(result, indent=2, default=str).encode()
             else:
                 query_result_to_send = "Query Executed".encode()
                 # commit changes
                 db_conn_server.conn.commit()
-            conn.sendall(query_result_to_send)
+            self.conn.sendall(query_result_to_send)
         except Exception as exc:
             print('{}: {}'.format(type(exc).__name__, exc))
 

@@ -13,7 +13,7 @@ for i in range(1):
     else:
         r = requests.post('http://localhost:5000/databases', data={'query': query})
     request_end_time = time.time()
-    # print(r.content.decode())
+    print(r.content.decode())
     print("Received")
     print("Request No. is ", i+1, "and time taken is ", request_end_time - request_start_time, "with status code ", r.status_code)
 
