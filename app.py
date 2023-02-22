@@ -57,7 +57,6 @@ class Database(Resource, threading.Thread):
         args = parser.parse_args()
         query = args['query'].lower()
         print("Thread ID for post: {}".format(threading.get_ident()))
-        time.sleep(30)
         print(connection.root.execute_query(query))
         message, status_code = {'response': 'Query Executed'}, 200
         self.post_message = message

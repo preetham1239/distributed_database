@@ -1,17 +1,25 @@
+import yaml
 from mysql.connector import connect, Error
 
 
 class DBConnector:
-    def __init__(self, db_name):
-        self.db_name = db_name
-        self.host = "localhost"
-        self.user = "root"
-        self.password = "Root123@#"
+    def __init__(self, db_id):
+        self.db_name = None
+        self.db_id = db_id
+        self.host = None
+        self.user = None
+        self.password = None
         self.conn = None
         self.cursor = None
 
     def connect(self):
-        # connect to mysql db
+        # open yaml file
+        with open('database.yaml') as f:
+            data = yaml.load(f, Loader=yaml.FullLoader)
+            self.host = data[self.db_id]['host']
+            self.password = data[self.db_id]['password']
+            self.user = data[self.db_id]['username']
+            self.db_name = data[self.db_id]['database']
         self.conn = connect(
             host=self.host,
             user=self.user,
