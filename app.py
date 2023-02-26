@@ -3,9 +3,6 @@ import time
 
 import rpyc
 import json
-
-from socket_conn import SocketConnectionClient
-
 from flask import Flask
 from flask_restful import reqparse, Api, Resource
 
@@ -38,7 +35,7 @@ class Database(Resource, threading.Thread):
 
         query_result = connection.root.execute_query(query)
         print("Thread ID for get: {}".format(threading.get_ident()))
-
+        print(query_result)
         query_result = json.loads(query_result)
         # for row in query_result:
         #     print(row)

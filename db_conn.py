@@ -1,5 +1,5 @@
 import yaml
-from mysql.connector import connect, Error
+from mysql.connector import connect
 
 
 class DBConnector:

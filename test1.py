@@ -5,10 +5,10 @@ import requests
 
 # make a request to the server 1000 times
 program_start_time = time.time()
-for i in range(1):
+for i in range(1, 2):
     request_start_time = time.time()
     # random integer
-    query_id = random.randint(1, 100000)
+    query_id = random.randint(10, 100000)
     query = f"insert into rooms(id, name) values ({query_id}, 'cewduerwj');"
     query = query.lower()
     if 'select' in query:
