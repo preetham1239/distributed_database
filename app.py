@@ -29,7 +29,7 @@ class Database(Resource, threading.Thread):
         # thread_obj.
 
     def dummy_get(self):
-        connection = rpyc.connect('localhost', 9000)
+        connection = rpyc.connect('localhost', 9000, config={"sync_request_timeout": 240})
         args = parser.parse_args()
         query = args['query'].lower()
 
@@ -50,10 +50,11 @@ class Database(Resource, threading.Thread):
         return self.post_message, self.post_status_code
 
     def dummy_post(self):
-        connection = rpyc.connect('localhost', 9000)
+        connection = rpyc.connect('localhost', 9000, config={"sync_request_timeout": 240})
         args = parser.parse_args()
         query = args['query'].lower()
         print("Thread ID for post: {}".format(threading.get_ident()))
+        time.sleep(1000)
         print(connection.root.execute_query(query))
         message, status_code = {'response': 'Query Executed'}, 200
         self.post_message = message

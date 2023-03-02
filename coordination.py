@@ -1,8 +1,6 @@
 import json
-import random
 import re
 import time
-
 import rpyc
 from rpyc.utils.server import ThreadedServer
 from rpyc.utils.factory import threading
@@ -11,12 +9,11 @@ from db_conn import DBConnector
 
 @rpyc.service
 class Coordination1(rpyc.Service):
-    def __init__(self):
+    def __init__(self, lock_connection):
         super().__init__()
         self.conn = None
-        self.lock_connection = rpyc.connect('localhost', 9001)
+        self.lock_connection = lock_connection
         self.rlock = threading.Lock()
-        self.lock_connection._config['sync_request_timeout'] = None
 
     @rpyc.exposed
     def execute_query(self, query):
@@ -33,23 +30,20 @@ class Coordination1(rpyc.Service):
             else:
                 database_id = "database3"
             db_conn_server = DBConnector(database_id)
-            # print("db name: ", db_conn_server.db_name)
             db_conn_server.connect()
-            # print("Connected to DB")
             # execute query
             result = ''
-            if self.lock_connection.root.acquire_lock(query):
-                self.rlock.acquire()
-                result = db_conn_server.execute(query)
-                # To delete start
-                if 'select' in query:
-                    print("Sleeping for 1000 seconds")
-                    time.sleep(1000)
-                # To delete end
-                self.rlock.release()
-                self.lock_connection.root.release_lock(query)
+            lock_status = self.lock_connection.root.acquire_lock(query)
+            print("Lock status: ", lock_status)
+            if lock_status:
+                result = self.execute_new(query, db_conn_server)
             else:
-                time.sleep(10)
+                status = "Waiting for lock"
+                while status == "Waiting for lock":
+                    time.sleep(10)
+                    if self.lock_connection.root.acquire_lock(query):
+                        result = self.execute_new(query, db_conn_server)
+                        status = "Lock acquired"
 
             if 'select' in query.lower():
                 query_result_to_send = json.dumps(result, indent=2, default=str).encode()
@@ -57,11 +51,23 @@ class Coordination1(rpyc.Service):
                 query_result_to_send = "Query Executed".encode()
                 # commit changes
                 db_conn_server.conn.commit()
-            # self.conn.sendall(query_result_to_send)
             return query_result_to_send
         except Exception as exc:
             print('{}: {}'.format(type(exc).__name__, exc))
             return exc
+
+    def execute_new(self, query, db_conn_server):
+        if 'insert' in query:
+            print("Sleeping for 1000 seconds")
+            time.sleep(100)
+        self.rlock.acquire()
+        result = db_conn_server.execute(query)
+        # To delete start
+        print("Query: ", query, "Thread ID: ", threading.get_ident())
+        # To delete end
+        self.rlock.release()
+        self.lock_connection.root.release_lock(query)
+        return result
 
 
 def calculate_hash(query):
@@ -83,5 +89,6 @@ def calculate_hash(query):
 
 
 print('Coordination Layer Started ...')
-server = ThreadedServer(Coordination1, port=9000)
+lock_connection_main = rpyc.connect('localhost', 9001, config={"sync_request_timeout": 240})
+server = ThreadedServer(Coordination1(lock_connection_main), port=9000)
 server.start()
