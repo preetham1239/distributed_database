@@ -5,12 +5,28 @@ import rpyc
 import json
 from flask import Flask
 from flask_restful import reqparse, Api, Resource
+from multiprocessing import Process
+import socket
 
 app = Flask(__name__)
 api = Api(app)
 
+
+def flask_server():
+    app.run()
+
+
 parser = reqparse.RequestParser()
 parser.add_argument('query', location='form')
+connection = rpyc.connect('localhost', 9000, config={"sync_request_timeout": 240})
+
+
+# listen on a socket for incoming connections using socket library
+def ping_server():
+    print ('Starting Ping...')
+    while True:
+        time.sleep(10)
+        print(connection.root.ping_server())
 
 
 class Database(Resource, threading.Thread):
@@ -29,7 +45,6 @@ class Database(Resource, threading.Thread):
         # thread_obj.
 
     def dummy_get(self):
-        connection = rpyc.connect('localhost', 9000, config={"sync_request_timeout": 240})
         args = parser.parse_args()
         query = args['query'].lower()
 
@@ -50,11 +65,10 @@ class Database(Resource, threading.Thread):
         return self.post_message, self.post_status_code
 
     def dummy_post(self):
-        connection = rpyc.connect('localhost', 9000, config={"sync_request_timeout": 240})
         args = parser.parse_args()
         query = args['query'].lower()
         print("Thread ID for post: {}".format(threading.get_ident()))
-        time.sleep(1000)
+        # time.sleep(1000)
         print(connection.root.execute_query(query))
         message, status_code = {'response': 'Query Executed'}, 200
         self.post_message = message
@@ -63,5 +77,10 @@ class Database(Resource, threading.Thread):
 
 api.add_resource(Database, '/databases')
 
+# if __name__ == '__main__':
+#     app.run(debug=True)
+# use multiprocessing module to run both flask and socket server
 if __name__ == '__main__':
+    backProc = Process(target=ping_server, args=())
+    backProc.start()
     app.run(debug=True)

@@ -5,6 +5,7 @@ import rpyc
 from rpyc.utils.server import ThreadedServer
 from rpyc.utils.factory import threading
 from db_conn import DBConnector
+import socket
 
 
 @rpyc.service
@@ -14,6 +15,13 @@ class Coordination1(rpyc.Service):
         self.conn = None
         self.lock_connection = lock_connection
         self.rlock = threading.Lock()
+
+    @rpyc.exposed
+    # ping server on 9090 using socket package
+    def ping_server(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        while True:
+            return 'I Am Alive'
 
     @rpyc.exposed
     def execute_query(self, query):
@@ -26,7 +34,7 @@ class Coordination1(rpyc.Service):
             table_name_hash = calculate_hash(query)
             # print("table name hash: ", table_name_hash)
             if table_name_hash != -1:
-                database_id = "database" + str(1)#str(random.choice([1, 2]))  # str(table_name_hash)
+                database_id = "database" + str(1)  # str(random.choice([1, 2]))  # str(table_name_hash)
             else:
                 database_id = "database3"
             db_conn_server = DBConnector(database_id)
@@ -57,9 +65,9 @@ class Coordination1(rpyc.Service):
             return exc
 
     def execute_new(self, query, db_conn_server):
-        if 'insert' in query:
-            print("Sleeping for 1000 seconds")
-            time.sleep(100)
+        # if 'insert' in query:
+        #     print("Sleeping for 1000 seconds")
+        #     time.sleep(100)
         self.rlock.acquire()
         result = db_conn_server.execute(query)
         # To delete start
@@ -86,6 +94,7 @@ def calculate_hash(query):
         return hash(table_name) % 2 + 1
     else:
         return -1
+
 
 
 print('Coordination Layer Started ...')
