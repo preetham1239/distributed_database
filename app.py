@@ -6,18 +6,13 @@ import json
 from flask import Flask
 from flask_restful import reqparse, Api, Resource
 from multiprocessing import Process
-import socket
+
 
 app = Flask(__name__)
 api = Api(app)
-
-
-def flask_server():
-    app.run()
-
-
 parser = reqparse.RequestParser()
 parser.add_argument('query', location='form')
+parser.add_argument('api_key', location='form')
 connection = rpyc.connect('localhost', 9000, config={"sync_request_timeout": 240})
 
 
@@ -25,8 +20,8 @@ connection = rpyc.connect('localhost', 9000, config={"sync_request_timeout": 240
 def ping_server():
     print ('Starting Ping...')
     while True:
-        time.sleep(10)
         print(connection.root.ping_server())
+        time.sleep(1000)
 
 
 class Database(Resource, threading.Thread):
@@ -41,13 +36,13 @@ class Database(Resource, threading.Thread):
 
     def authenticate(self):
         args = parser.parse_args()
+        print(args)
         try:
             api_key = args['api_key']
             if api_key == self.api_key:
                 return True
         except KeyError:
             return False
-
 
     def get(self):
         if self.authenticate():
@@ -56,7 +51,6 @@ class Database(Resource, threading.Thread):
             return self.get_message, self.get_status_code
         else:
             return {'response': 'Authentication Failed'}, 401
-        # thread_obj.
 
     def dummy_get(self):
         args = parser.parse_args()
@@ -66,9 +60,6 @@ class Database(Resource, threading.Thread):
         print("Thread ID for get: {}".format(threading.get_ident()))
         print(query_result)
         query_result = json.loads(query_result)
-        # for row in query_result:
-        #     print(row)
-
         message, status_code = {'result': query_result}, 200
         self.get_message = message
         self.get_status_code = status_code
@@ -94,8 +85,6 @@ class Database(Resource, threading.Thread):
 
 api.add_resource(Database, '/databases')
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
 # use multiprocessing module to run both flask and socket server
 if __name__ == '__main__':
     backProc = Process(target=ping_server, args=())

@@ -19,9 +19,7 @@ class Coordination1(rpyc.Service):
     @rpyc.exposed
     # ping server on 9090 using socket package
     def ping_server(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        while True:
-            return 'I Am Alive'
+        return 'I Am Alive'
 
     @rpyc.exposed
     def execute_query(self, query):
