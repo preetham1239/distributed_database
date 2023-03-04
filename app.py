@@ -37,11 +37,25 @@ class Database(Resource, threading.Thread):
         self.get_status_code = None
         self.post_message = None
         self.post_status_code = None
+        self.api_key = '12345'
+
+    def authenticate(self):
+        args = parser.parse_args()
+        try:
+            api_key = args['api_key']
+            if api_key == self.api_key:
+                return True
+        except KeyError:
+            return False
+
 
     def get(self):
-        thread_obj = threading.Thread(target=self.dummy_get())
-        thread_obj.start()
-        return self.get_message, self.get_status_code
+        if self.authenticate():
+            thread_obj = threading.Thread(target=self.dummy_get())
+            thread_obj.start()
+            return self.get_message, self.get_status_code
+        else:
+            return {'response': 'Authentication Failed'}, 401
         # thread_obj.
 
     def dummy_get(self):
@@ -60,9 +74,12 @@ class Database(Resource, threading.Thread):
         self.get_status_code = status_code
 
     def post(self):
-        thread_obj = threading.Thread(target=self.dummy_post())
-        thread_obj.start()
-        return self.post_message, self.post_status_code
+        if self.authenticate():
+            thread_obj = threading.Thread(target=self.dummy_post())
+            thread_obj.start()
+            return self.post_message, self.post_status_code
+        else:
+            return {'response': 'Authentication Failed'}, 401
 
     def dummy_post(self):
         args = parser.parse_args()
