@@ -12,9 +12,9 @@ for i in range(1, 2):
     query = f"insert into rooms(id, name) values ({query_id}, 'cewduerwj');"
     query = query.lower()
     if 'select' in query:
-        r = requests.get('http://localhost:5000/databases', data={'query': query})
+        r = requests.get('http://localhost:5000/databases', data={'query': query, 'api_key': '12345'})
     else:
-        r = requests.post('http://localhost:5000/databases', data={'query': query})
+        r = requests.post('http://localhost:5000/databases', data={'query': query, 'api_key': '12345'})
     request_end_time = time.time()
     print(r.content.decode())
     print("Received")

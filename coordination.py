@@ -4,8 +4,21 @@ import time
 import rpyc
 from rpyc.utils.server import ThreadedServer
 from rpyc.utils.factory import threading
+import threading as thread
 from db_conn import DBConnector
 import socket
+
+
+def ping_server():
+    # connect to socket on 9002
+    print("Starting ping server")
+    time.sleep(10)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(('localhost', 9002))
+        while True:
+            print("Sending ping")
+            time.sleep(10)
+            s.sendall(b'I Am Alive!')
 
 
 @rpyc.service
@@ -15,11 +28,6 @@ class Coordination1(rpyc.Service):
         self.conn = None
         self.lock_connection = lock_connection
         self.rlock = threading.Lock()
-
-    @rpyc.exposed
-    # ping server on 9090 using socket package
-    def ping_server(self):
-        return 'I Am Alive'
 
     @rpyc.exposed
     def execute_query(self, query):
@@ -94,8 +102,14 @@ def calculate_hash(query):
         return -1
 
 
-
 print('Coordination Layer Started ...')
 lock_connection_main = rpyc.connect('localhost', 9001, config={"sync_request_timeout": 240})
+
 server = ThreadedServer(Coordination1(lock_connection_main), port=9000)
+server = threading.Thread(target=server.start)
+ping = thread.Thread(target=ping_server)
+
 server.start()
+ping.start()
+
+

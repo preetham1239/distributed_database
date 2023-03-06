@@ -1,4 +1,5 @@
 import threading
+import socket
 import time
 
 import rpyc
@@ -18,10 +19,28 @@ connection = rpyc.connect('localhost', 9000, config={"sync_request_timeout": 240
 
 # listen on a socket for incoming connections using socket library
 def ping_server():
-    print ('Starting Ping...')
-    while True:
-        print(connection.root.ping_server())
-        time.sleep(1000)
+    with open('key.txt', 'r') as f:
+        key = f.readline()
+        flag = int(key.split('=')[1])
+        f.close()
+    if flag == 0:
+        print ('Starting Ping...')
+        flag = 1
+        # write key back to file
+        with open('key.txt', 'w') as f:
+            f.write('flag={}'.format(flag))
+            f.close()
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            # bind the socket to a public host, and a well-known port
+            s.bind(('localhost', 9002))
+            # become a server socket
+            s.listen()
+            while True:
+                # accept connections from outside
+                client_socket, address = s.accept()
+                msg = client_socket.recv(1024)
+                print(msg.decode('utf-8'))
+
 
 
 class Database(Resource, threading.Thread):
@@ -90,3 +109,4 @@ if __name__ == '__main__':
     backProc = Process(target=ping_server, args=())
     backProc.start()
     app.run(debug=True)
+    backProc.join()
