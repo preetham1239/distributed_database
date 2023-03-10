@@ -1,0 +1,15 @@
+app:
+  host: localhost
+  port: 5000
+
+lock_manager:
+  host: localhost
+  port: 9001
+
+coordination:
+  host: localhost
+  port: 9000
+
+socket_ping:
+  host: localhost
+  port: 9002

@@ -4,6 +4,8 @@ import time
 
 import rpyc
 import json
+
+import yaml
 from flask import Flask
 from flask_restful import reqparse, Api, Resource
 from multiprocessing import Process
@@ -40,7 +42,6 @@ def ping_server():
                 client_socket, address = s.accept()
                 msg = client_socket.recv(1024)
                 print(msg.decode('utf-8'))
-
 
 
 class Database(Resource, threading.Thread):
@@ -106,7 +107,14 @@ api.add_resource(Database, '/databases')
 
 # use multiprocessing module to run both flask and socket server
 if __name__ == '__main__':
+
+    with open('config.yaml', 'r') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    host = config['app']['host']
+    port = config['app']['port']
+    print("Config: ", config)
+
     backProc = Process(target=ping_server, args=())
     backProc.start()
-    app.run(debug=True)
+    app.run(debug=True, host=host, port=port)
     backProc.join()

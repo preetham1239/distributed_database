@@ -2,6 +2,7 @@ import json
 import re
 import time
 import rpyc
+import yaml
 from rpyc.utils.server import ThreadedServer
 from rpyc.utils.factory import threading
 import threading as thread
@@ -102,14 +103,22 @@ def calculate_hash(query):
         return -1
 
 
-print('Coordination Layer Started ...')
-lock_connection_main = rpyc.connect('localhost', 9001, config={"sync_request_timeout": 240})
+if __name__ == '__main__':
+    with open('config.yaml', 'r') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
 
-server = ThreadedServer(Coordination1(lock_connection_main), port=9000)
-server = threading.Thread(target=server.start)
-ping = thread.Thread(target=ping_server)
+    host = config['coordination']['host']
+    port = config['coordination']['port']
+    lock_manager_port = config['lock_manager']['port']
+    lock_manager_host = config['lock_manager']['host']
+    print('Coordination Layer Started ...')
+    lock_connection_main = rpyc.connect(lock_manager_host, lock_manager_port, config={"sync_request_timeout": 240})
 
-server.start()
-ping.start()
+    server = ThreadedServer(Coordination1(lock_connection_main), port=port, hostname=host)
+    server = threading.Thread(target=server.start)
+    ping = thread.Thread(target=ping_server)
+
+    server.start()
+    ping.start()
 
 

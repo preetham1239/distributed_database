@@ -1,4 +1,5 @@
 import rpyc
+import yaml
 from rpyc.utils.server import ThreadedServer
 import threading
 
@@ -39,6 +40,11 @@ class LockManager(rpyc.Service):
         print("Lock release: ", self.lock_hash)
 
 
-print('Lock Manager Started ...')
-server = ThreadedServer(LockManager, port=9001)
-server.start()
+if __name__ == '__main__':
+    with open('config.yaml') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    port = config['lock_manager']['port']
+    host = config['lock_manager']['host']
+    print('Lock Manager Started ...')
+    server = ThreadedServer(LockManager, port=port, hostname=host)
+    server.start()
