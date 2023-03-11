@@ -8,3 +8,4 @@ server.py
 client.py
 notes.txt
 distributed.pem
+.DS_Store

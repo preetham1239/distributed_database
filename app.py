@@ -43,10 +43,10 @@ def ping_server(ahost, aport):
             # bind the socket to a public host, and a well-known port
             s.bind((ahost, aport))
             s.listen()
+            client_socket, address = s.accept()
             # become a server socket
             while True:
                 # accept connections from outside
-                client_socket, address = s.accept()
                 msg = client_socket.recv(1024)
                 print(msg.decode('utf-8'))
 
