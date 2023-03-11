@@ -16,11 +16,18 @@ api = Api(app)
 parser = reqparse.RequestParser()
 parser.add_argument('query', location='form')
 parser.add_argument('api_key', location='form')
-connection = rpyc.connect('localhost', 9000, config={"sync_request_timeout": 240})
 
+with open('config.yaml', 'r') as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
+    f.close()
+
+coordinator_host = config['coordination']['host']
+coordinator_port = config['coordination']['port']
+
+connection = rpyc.connect(coordinator_host, coordinator_port, config={"sync_request_timeout": 240})
 
 # listen on a socket for incoming connections using socket library
-def ping_server():
+def ping_server(ahost, aport):
     with open('key.txt', 'r') as f:
         key = f.readline()
         flag = int(key.split('=')[1])
@@ -34,9 +41,9 @@ def ping_server():
             f.close()
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             # bind the socket to a public host, and a well-known port
-            s.bind(('localhost', 9002))
-            # become a server socket
+            s.bind((ahost, aport))
             s.listen()
+            # become a server socket
             while True:
                 # accept connections from outside
                 client_socket, address = s.accept()
@@ -78,7 +85,6 @@ class Database(Resource, threading.Thread):
 
         query_result = connection.root.execute_query(query)
         print("Thread ID for get: {}".format(threading.get_ident()))
-        print(query_result)
         query_result = json.loads(query_result)
         message, status_code = {'result': query_result}, 200
         self.get_message = message
@@ -107,14 +113,10 @@ api.add_resource(Database, '/databases')
 
 # use multiprocessing module to run both flask and socket server
 if __name__ == '__main__':
-
-    with open('config.yaml', 'r') as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
     host = config['app']['host']
     port = config['app']['port']
-    print("Config: ", config)
-
-    backProc = Process(target=ping_server, args=())
+    ping_port = config['socket_ping']['port']
+    backProc = Process(target=ping_server, args=(host, ping_port))
     backProc.start()
     app.run(debug=True, host=host, port=port)
     backProc.join()

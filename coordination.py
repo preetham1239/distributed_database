@@ -10,16 +10,21 @@ from db_conn import DBConnector
 import socket
 
 
-def ping_server():
+def ping_server(cphost, cpport):
     # connect to socket on 9002
     print("Starting ping server")
+    print("Host: ", cphost, "Port: ", cpport)
     time.sleep(10)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(('localhost', 9002))
+        s.connect((cphost, cpport))
         while True:
             print("Sending ping")
             time.sleep(10)
-            s.sendall(b'I Am Alive!')
+            try:
+                s.sendall(b'I Am There!')
+            except Exception as e:
+                print("Error in sending ping: ", e)
+                break
 
 
 @rpyc.service
@@ -111,12 +116,15 @@ if __name__ == '__main__':
     port = config['coordination']['port']
     lock_manager_port = config['lock_manager']['port']
     lock_manager_host = config['lock_manager']['host']
+    app_host = config['app']['host']
+    ping_port = config['socket_ping']['port']
+
     print('Coordination Layer Started ...')
     lock_connection_main = rpyc.connect(lock_manager_host, lock_manager_port, config={"sync_request_timeout": 240})
 
     server = ThreadedServer(Coordination1(lock_connection_main), port=port, hostname=host)
     server = threading.Thread(target=server.start)
-    ping = thread.Thread(target=ping_server)
+    ping = thread.Thread(target=ping_server, args=(app_host, ping_port))
 
     server.start()
     ping.start()

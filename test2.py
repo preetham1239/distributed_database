@@ -2,6 +2,7 @@ import time
 import random
 
 import requests
+import yaml
 
 # make a request to the server 1000 times
 program_start_time = time.time()
@@ -11,10 +12,14 @@ for i in range(1, 2):
     query_id = random.randint(10, 100000)
     query = f"insert into rooms(id, name) values ({query_id}, 'cewduerwj');"
     query = query.lower()
+    with open('config.yaml') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    port = config['app']['port']
+    host = config['app']['host']
     if 'select' in query:
-        r = requests.get('http://localhost:5000/databases', data={'query': query, 'api_key': '12345'})
+        r = requests.get(f'http://{host}:{port}/databases', data={'query': query, 'api_key': '12345'})
     else:
-        r = requests.post('http://localhost:5000/databases', data={'query': query, 'api_key': '12345'})
+        r = requests.post('http://{host}:{port}/databases', data={'query': query})
     request_end_time = time.time()
     print(r.content.decode())
     print("Received")
