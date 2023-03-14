@@ -11,6 +11,12 @@ import socket
 
 
 def ping_server(cphost, cpport):
+    """
+    It connects to the socket on the CP server and sends a message every 10 seconds
+    
+    :param cphost: The hostname of the server that the client will connect to
+    :param cpport: The port that the client will connect to the server on
+    """
     # connect to socket on 9002
     print("Starting ping server")
     print("Host: ", cphost, "Port: ", cpport)
@@ -37,6 +43,13 @@ class Coordination1(rpyc.Service):
 
     @rpyc.exposed
     def execute_query(self, query):
+        """
+        The function takes a query as input, connects to the database, acquires a lock, executes the query,
+        and returns the result
+        
+        :param query: The query to be executed
+        :return: The result of the query is being returned.
+        """
         # get thread ID
         print("Thread ID: {}".format(threading.get_ident()))
         if query is None:

@@ -28,6 +28,16 @@ connection = rpyc.connect(coordinator_host, coordinator_port, config={"sync_requ
 
 # listen on a socket for incoming connections using socket library
 def ping_server(ahost, aport):
+    """
+    It creates a socket, binds it to a host and port, and listens for incoming connections. 
+    
+    When a connection is made, it receives a message and prints it to the console. 
+    
+    The message is sent from the client.
+    
+    :param ahost: the hostname of the server
+    :param aport: the port number that the server will listen on
+    """
     with open('key.txt', 'r') as f:
         key = f.readline()
         flag = int(key.split('=')[1])
@@ -62,6 +72,10 @@ class Database(Resource, threading.Thread):
         self.api_key = '12345'
 
     def authenticate(self):
+        """
+        If the api_key is in the request, then return True, otherwise return False
+        :return: True or False
+        """
         args = parser.parse_args()
         print(args)
         try:
@@ -72,6 +86,10 @@ class Database(Resource, threading.Thread):
             return False
 
     def get(self):
+        """
+        The function is a GET request that returns a message and a status code
+        :return: The get method is returning a tuple of the get_message and get_status_code.
+        """
         if self.authenticate():
             thread_obj = threading.Thread(target=self.dummy_get())
             thread_obj.start()
@@ -80,6 +98,9 @@ class Database(Resource, threading.Thread):
             return {'response': 'Authentication Failed'}, 401
 
     def dummy_get(self):
+        """
+        It takes a query, executes it, and returns the result
+        """
         args = parser.parse_args()
         query = args['query'].lower()
 
@@ -91,6 +112,11 @@ class Database(Resource, threading.Thread):
         self.get_status_code = status_code
 
     def post(self):
+        """
+        The function is a POST request that takes in a JSON object, and if the authentication is successful,
+        it starts a new thread that calls the dummy_post() function
+        :return: The post method is returning a tuple of the post_message and post_status_code.
+        """
         if self.authenticate():
             thread_obj = threading.Thread(target=self.dummy_post())
             thread_obj.start()
@@ -99,6 +125,9 @@ class Database(Resource, threading.Thread):
             return {'response': 'Authentication Failed'}, 401
 
     def dummy_post(self):
+        """
+        The function takes in a query, executes it, and returns a response
+        """
         args = parser.parse_args()
         query = args['query'].lower()
         print("Thread ID for post: {}".format(threading.get_ident()))

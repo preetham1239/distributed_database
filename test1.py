@@ -19,7 +19,7 @@ for i in range(1, 2):
     if 'select' in query:
         r = requests.get(f'http://{host}:{port}/databases', data={'query': query, 'api_key': '12345'})
     else:
-        r = requests.post('http://{host}:{port}/databases', data={'query': query})
+        r = requests.post(f'http://{host}:{port}/databases', data={'query': query, 'api_key': '12345'})
     request_end_time = time.time()
     print(r.content.decode())
     print("Received")
