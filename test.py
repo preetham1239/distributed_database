@@ -7,7 +7,7 @@ import yaml
 program_start_time = time.time()
 for i in range(1):
     request_start_time = time.time()
-    query = "select * from rooms;"
+    query = "select * from rooms1;"
     query = query.lower()
     with open('config.yaml') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)

@@ -87,7 +87,8 @@ class Coordination1(rpyc.Service):
             return query_result_to_send
         except Exception as exc:
             print('{}: {}'.format(type(exc).__name__, exc))
-            return exc
+            err_dict = exc.__dict__
+            return err_dict['msg'].encode()
 
     def execute_new(self, query, db_conn_server):
         # if 'insert' in query:
@@ -122,6 +123,9 @@ def calculate_hash(query):
 
 
 if __name__ == '__main__':
+    with open('key.txt', 'w') as f:
+        f.write('flag=0')
+
     with open('config.yaml', 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 

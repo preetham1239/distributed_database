@@ -29,12 +29,9 @@ connection = rpyc.connect(coordinator_host, coordinator_port, config={"sync_requ
 # listen on a socket for incoming connections using socket library
 def ping_server(ahost, aport):
     """
-    It creates a socket, binds it to a host and port, and listens for incoming connections. 
-    
-    When a connection is made, it receives a message and prints it to the console. 
-    
+    It creates a socket, binds it to a host and port, and listens for incoming connections.
+    When a connection is made, it receives a message and prints it to the console.
     The message is sent from the client.
-    
     :param ahost: the hostname of the server
     :param aport: the port number that the server will listen on
     """
@@ -55,10 +52,12 @@ def ping_server(ahost, aport):
             s.listen()
             client_socket, address = s.accept()
             # become a server socket
+            latest_ping_received = time.time()
             while True:
                 # accept connections from outside
-                msg = client_socket.recv(1024)
-                print(msg.decode('utf-8'))
+                client_socket.recv(1024).decode('utf-8')
+                latest_ping_received = time.time() - latest_ping_received
+                print("Time since last ping: ", latest_ping_received)
 
 
 class Database(Resource, threading.Thread):
@@ -106,7 +105,8 @@ class Database(Resource, threading.Thread):
 
         query_result = connection.root.execute_query(query)
         print("Thread ID for get: {}".format(threading.get_ident()))
-        query_result = json.loads(query_result)
+        print("Query result: ", query_result)
+        query_result = query_result.decode('utf-8')
         message, status_code = {'result': query_result}, 200
         self.get_message = message
         self.get_status_code = status_code
