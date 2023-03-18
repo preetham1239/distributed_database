@@ -13,7 +13,7 @@ import socket
 def ping_server(cphost, cpport):
     """
     It connects to the socket on the CP server and sends a message every 10 seconds
-    
+
     :param cphost: The hostname of the server that the client will connect to
     :param cpport: The port that the client will connect to the server on
     """
@@ -27,11 +27,10 @@ def ping_server(cphost, cpport):
             print("Sending ping")
             time.sleep(10)
             try:
-                s.sendall(b'I Am There!')
+                s.sendall(b'Coordination is Alive!')
             except Exception as e:
                 print("Error in sending ping: ", e)
                 break
-
 
 @rpyc.service
 class Coordination1(rpyc.Service):
@@ -56,26 +55,34 @@ class Coordination1(rpyc.Service):
             return None
         try:
             # connect to DB
-            table_name_hash = calculate_hash(query)
-            # print("table name hash: ", table_name_hash)
-            if table_name_hash != -1:
-                database_id = "database" + str(1)  # str(random.choice([1, 2]))  # str(table_name_hash)
-            else:
-                database_id = "database3"
-            db_conn_server = DBConnector(database_id)
-            db_conn_server.connect()
+            # table_name_hash = calculate_hash(query)
+            # # print("table name hash: ", table_name_hash)
+            # if table_name_hash != -1:
+            #     database_id = "database" + str(1)  # str(random.choice([1, 2]))  # str(table_name_hash)
+            # else:
+            #     database_id = "database3"
+            db_conn_server1 = DBConnector("database1")
+            db_conn_server2 = DBConnector("database2")
+            db_conn_server3 = DBConnector("database3")
+            try:
+                db_conn_server1.connect()
+            except Exception as e:
+                print("Error in connecting to database1: ", e)
+                db_conn_server1 = None
+            db_conn_server2.connect()
+            db_conn_server3.connect()
             # execute query
             result = ''
             lock_status = self.lock_connection.root.acquire_lock(query)
             print("Lock status: ", lock_status)
             if lock_status:
-                result = self.execute_new(query, db_conn_server)
+                result = self.execute_new(query, db_conn_server1, db_conn_server2, db_conn_server3)
             else:
                 status = "Waiting for lock"
                 while status == "Waiting for lock":
                     time.sleep(10)
                     if self.lock_connection.root.acquire_lock(query):
-                        result = self.execute_new(query, db_conn_server)
+                        result = self.execute_new(query, db_conn_server1, db_conn_server2, db_conn_server3)
                         status = "Lock acquired"
 
             if 'select' in query.lower():
@@ -83,19 +90,29 @@ class Coordination1(rpyc.Service):
             else:
                 query_result_to_send = "Query Executed".encode()
                 # commit changes
-                db_conn_server.conn.commit()
+                if db_conn_server1 is not None:
+                    db_conn_server1.conn.commit()
+                db_conn_server2.conn.commit()
+                db_conn_server3.conn.commit()
             return query_result_to_send
         except Exception as exc:
+            self.lock_connection.root.release_lock(query)
             print('{}: {}'.format(type(exc).__name__, exc))
             err_dict = exc.__dict__
-            return err_dict['msg'].encode()
+            print("Error: ", err_dict)
+            return ("Error: " + err_dict['msg']).encode()
 
-    def execute_new(self, query, db_conn_server):
+    def execute_new(self, query, db_conn_server1, db_conn_server2, db_conn_server3):
         # if 'insert' in query:
         #     print("Sleeping for 1000 seconds")
         #     time.sleep(100)
         self.rlock.acquire()
-        result = db_conn_server.execute(query)
+        if db_conn_server1 is not None:
+            result = db_conn_server1.execute(query)
+        else:
+            print("Error in executing query on database 1, as its deleted")
+        result = db_conn_server2.execute(query)
+        result = db_conn_server3.execute(query)
         # To delete start
         print("Query: ", query, "Thread ID: ", threading.get_ident())
         # To delete end

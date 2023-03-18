@@ -50,14 +50,13 @@ def ping_server(ahost, aport):
             # bind the socket to a public host, and a well-known port
             s.bind((ahost, aport))
             s.listen()
-            client_socket, address = s.accept()
             # become a server socket
-            latest_ping_received = time.time()
+            client_socket, address = s.accept()
             while True:
                 # accept connections from outside
-                client_socket.recv(1024).decode('utf-8')
-                latest_ping_received = time.time() - latest_ping_received
-                print("Time since last ping: ", latest_ping_received)
+                msg = client_socket.recv(1024).decode('utf-8')
+                print(msg)
+                time.sleep(10)
 
 
 class Database(Resource, threading.Thread):
@@ -76,7 +75,6 @@ class Database(Resource, threading.Thread):
         :return: True or False
         """
         args = parser.parse_args()
-        print(args)
         try:
             api_key = args['api_key']
             if api_key == self.api_key:
@@ -105,8 +103,12 @@ class Database(Resource, threading.Thread):
 
         query_result = connection.root.execute_query(query)
         print("Thread ID for get: {}".format(threading.get_ident()))
-        print("Query result: ", query_result)
         query_result = query_result.decode('utf-8')
+        if "Error:" in query_result:
+            message, status_code = {'result': query_result}, 400
+        else:
+            query_result = json.loads(query_result)
+            message, status_code = {'result': query_result}, 200
         message, status_code = {'result': query_result}, 200
         self.get_message = message
         self.get_status_code = status_code
@@ -132,7 +134,14 @@ class Database(Resource, threading.Thread):
         query = args['query'].lower()
         print("Thread ID for post: {}".format(threading.get_ident()))
         # time.sleep(1000)
-        print(connection.root.execute_query(query))
+        query_result = connection.root.execute_query(query)
+        query_result = query_result.decode('utf-8')
+        if "Error:" in query_result:
+            message, status_code = {'result': query_result}, 400
+        else:
+            print("Query Result", query_result)
+            # query_result = json.loads(query_result)
+            message, status_code = {'result': "Query Executed"}, 200
         message, status_code = {'response': 'Query Executed'}, 200
         self.post_message = message
         self.post_status_code = status_code

@@ -19,25 +19,25 @@ class LockManager(rpyc.Service):
                 self.rlock_hash[query] = 1
             else:
                 self.rlock_hash[query] += 1
-            print("Rlock: ", self.rlock_hash)
+            print("Rlock Acquired: ", self.rlock_hash)
             return True
         else:
             if self.lock_hash is None:
                 self.lock_hash = 1
-                print("Lock: ", self.lock_hash)
+                print("Lock Acquired: ", self.lock_hash)
                 return True
             else:
-                print("Lock: ", self.lock_hash)
+                print("Lock Waiting: ", self.lock_hash)
                 return False
 
     @rpyc.exposed
     def release_lock(self, query):
         if 'select' in query:
             self.rlock_hash[query] -= 1
+            print("Rlock release: ", self.rlock_hash)
         else:
             self.lock_hash = None
-        print("Rlock release: ", self.rlock_hash)
-        print("Lock release: ", self.lock_hash)
+            print("Lock release: ", self.lock_hash)
 
 
 if __name__ == '__main__':

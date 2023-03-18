@@ -5,10 +5,9 @@ import yaml
 
 # make a request to the server 1000 times
 program_start_time = time.time()
-for i in range(1):
+for i in range(100):
     request_start_time = time.time()
-    query = "select * from rooms1;"
-    query = query.lower()
+    query = "select * from rooms;".lower()
     with open('config.yaml') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     port = config['app']['port']

@@ -10,12 +10,12 @@ database2:
   password: Root123@#
   database: test2
 
-#database3:
-#  host: localhost
-#  username: root
-#  password: Root123@#
-#  database: test3
-#
+database3:
+  host: localhost
+  username: root
+  password: Root123@#
+  database: test3
+
 #database1:
 #  host: database-1.crgwixpjxnmq.us-west-1.rds.amazonaws.com
 #  username: admin
@@ -23,13 +23,13 @@ database2:
 #  database: test1
 #
 #database2:
-#  host: database-1.crgwixpjxnmq.us-west-1.rds.amazonaws.com
+#  host: database-2.crgwixpjxnmq.us-west-1.rds.amazonaws.com #database-1.crgwixpjxnmq.us-west-1.rds.amazonaws.com
 #  username: admin
 #  password: Root210100
 #  database: test2
 #
 #database3:
-#  host: database-1.crgwixpjxnmq.us-west-1.rds.amazonaws.com
+#  host: database-3.crgwixpjxnmq.us-west-1.rds.amazonaws.com #database-1.crgwixpjxnmq.us-west-1.rds.amazonaws.com
 #  username: admin
 #  password: Root210100
 #  database: test3
